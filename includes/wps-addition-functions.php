@@ -10,7 +10,7 @@ add_action('admin_menu', 'wps_addition_config_menu');
 function wps_addition_config_menu()
 {
     add_menu_page(
-        'Additional theme customization from wps-d',
+        'Additional theme customization from wps',
         'Config wps',
         'manage_options',
         'wps-addition-config/includes/wps-addition-config-page.php'
@@ -27,8 +27,10 @@ function plugin_wps_config_settings()
     register_setting('option_group_addition_config_wps', 'option_addition_config_wps', 'sanitize_callback');
     add_settings_section('section_id', '', '', 'wps_config_page');
     add_settings_field('addition_css_wps', 'Addition css', 'addition_css', 'wps_config_page', 'section_id');
+    add_settings_field('addition_js_wps', 'Addition js', 'addition_js', 'wps_config_page', 'section_id');
     add_settings_field('addition_on_off', 'Enabling functions', 'addition_on_off', 'wps_config_page', 'section_id');
     add_settings_field('addition_on_off_coupon', 'Enabling coupon functions', 'addition_on_off_coupon', 'wps_config_page', 'section_id');
+    add_settings_field('addition_on_off_js', 'Enabling addition js functions', 'addition_on_off_js', 'wps_config_page', 'section_id');
 }
 
 /**
@@ -40,6 +42,19 @@ function addition_css()
     $val = $val ? $val['css'] : null;
     ?>
     <textarea rows="20" cols="100" name="option_addition_config_wps[css]"
+              value="<?php echo esc_attr($val) ?>"><?php echo esc_attr($val) ?></textarea>
+    <?php
+}
+
+/**
+ * add section custom js to setting page
+ */
+function addition_js()
+{
+    $val = get_option('option_addition_config_wps');
+    $val = $val ? $val['js'] : null;
+    ?>
+    <textarea rows="20" cols="100" name="option_addition_config_wps[js]"
               value="<?php echo esc_attr($val) ?>"><?php echo esc_attr($val) ?></textarea>
     <?php
 }
@@ -66,6 +81,20 @@ function addition_on_off_coupon()
     ?>
     <label><input type="checkbox" name="option_addition_config_wps[onoffcoupon]" value="1" <?php checked(1, $val) ?> />
         On/Off (auto coupon application)
+    </label>
+    <?php
+}
+
+/**
+ * jumper add js
+ */
+function addition_on_off_js()
+{
+    $val = get_option('option_addition_config_wps');
+    $val = $val ? $val['onoffjs'] : null;
+    ?>
+    <label><input type="checkbox" name="option_addition_config_wps[onoffjs]" value="1" <?php checked(1, $val) ?> />
+        On/Off (addition js)
     </label>
     <?php
 }
@@ -102,12 +131,33 @@ function insert_custom_css()
 }
 
 /**
+ * add custom js to front page
+ */
+add_action('wp_head', 'insert_custom_inline_script');
+
+function insert_custom_inline_script()
+{
+    $onOff = get_option('option_addition_config_wps');
+    $onoffjs = $onOff ? $onOff['onoffjs'] : null;
+
+    if (!is_null($onoffjs)) {
+        $val = get_option('option_addition_config_wps');
+        $val = $val ? $val['js'] : null;
+        echo '<script>' . PHP_EOL;
+        echo $val;
+        echo '</script>' . PHP_EOL;
+    }
+}
+
+
+/**
  * ADDITION FUNCTIONAL FROM FUNCTION.PHP
  * Special safe here, because when changing or updating the theme
  */
 $config = get_option('option_addition_config_wps');
 $onOff = $config ? $config['onoff'] : null;
 $onOffCoupon = $config ? $config['onoffcoupon'] : null;
+$onOffJs = $config ? $config['onoffjs'] : null;
 
 if (!is_null($onOffCoupon)) {
     add_action('woocommerce_before_cart_table', 'add_coupon_automatically');
