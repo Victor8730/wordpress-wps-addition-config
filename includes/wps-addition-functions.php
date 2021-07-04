@@ -32,6 +32,7 @@ function plugin_wps_config_settings()
     add_settings_field('addition_on_off_coupon', 'Enabling coupon functions', 'addition_on_off_coupon', 'wps_config_page', 'section_id');
     add_settings_field('addition_on_off_js', 'Enabling addition js functions', 'addition_on_off_js', 'wps_config_page', 'section_id');
     add_settings_field('addition_on_off_search_only_woocommerce', 'Enabling search only product WooCommerce', 'addition_on_off_search_only_woocommerce', 'wps_config_page', 'section_id');
+    add_settings_field('addition_on_off_catalog_order', 'Hide order in catalog product', 'addition_on_off_catalog_order', 'wps_config_page', 'section_id');
 }
 
 /**
@@ -114,6 +115,20 @@ function addition_on_off_search_only_woocommerce()
     <?php
 }
 
+/**
+ * jumper search only product
+ */
+function addition_on_off_catalog_order()
+{
+    $val = get_option('option_addition_config_wps');
+    $val = $val ? $val['onoffcatalogorder'] : null;
+    ?>
+    <label><input type="checkbox" name="option_addition_config_wps[onoffcatalogorder]" value="1" <?php checked(1, $val) ?> />
+        On/Off (order hide)
+    </label>
+    <?php
+}
+
 function sanitize_callback($options)
 {
 
@@ -135,14 +150,13 @@ add_action('wp_head', 'insert_custom_css');
 
 function insert_custom_css()
 {
-    $onOff = get_option('option_addition_config_wps');
-    $onOff = $onOff ? $onOff['onoff'] : null;
+    $val = get_option('option_addition_config_wps');
+    $val = $val ? $val['css'] : null;
 
-    if (!is_null($onOff)) {
-        $val = get_option('option_addition_config_wps');
-        $val = $val ? $val['css'] : null;
+    if (!is_null($val)) {
         echo "\n" . '<style type="text/css">' . $val . '</style>';
     }
+
 }
 
 /**
@@ -174,6 +188,7 @@ $onOff = $config ? $config['onoff'] : null;
 $onOffCoupon = $config ? $config['onoffcoupon'] : null;
 $onOffJs = $config ? $config['onoffjs'] : null;
 $onOffSearchOnly = $config ? $config['onoffsearchonly'] : null;
+$onOffCatalogOrder = $config ? $config['onoffcatalogorder'] : null;
 
 if (!is_null($onOffCoupon)) {
     add_action('woocommerce_before_cart_table', 'add_coupon_automatically');
@@ -189,6 +204,10 @@ if (!is_null($onOff)) {
 
 if(!is_null($onOffSearchOnly)){
     add_action( 'pre_get_posts', 'search_woocommerce_only' );
+}
+
+if(!is_null($onOffCatalogOrder)){
+    add_filter( "woocommerce_catalog_orderby", "hide_woocommerce_catalog_order", 20 );
 }
 
 function woocommerce_saved_sales_price($price, $product)
@@ -231,6 +250,22 @@ function search_woocommerce_only( $query ) {
     if( ! is_admin() && is_search() && $query->is_main_query() ) {
         $query->set( 'post_type', 'product' );
     }
+}
+
+/**
+ * Hide all select order
+ * If need showing only 1 element, delete from method other
+ * @param $order
+ * @return mixed
+ */
+function hide_woocommerce_catalog_order($order ) {
+    unset($order["popularity"]);
+    unset($order["rating"]);
+    unset($order["date"]);
+    unset($order["price"]);
+    unset($order["price-desc"]);
+
+    return $order;
 }
 
 /**
