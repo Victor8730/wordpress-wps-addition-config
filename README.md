@@ -12,6 +12,9 @@ The plugin allows you to implement a variety of customizations that are usually 
 
 ## Changelog
 
+- 1.0.2
+  - add search only on woocommerce
+  
 - 1.0.1
   - add addition js script
 

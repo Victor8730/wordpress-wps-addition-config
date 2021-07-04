@@ -31,6 +31,7 @@ function plugin_wps_config_settings()
     add_settings_field('addition_on_off', 'Enabling functions', 'addition_on_off', 'wps_config_page', 'section_id');
     add_settings_field('addition_on_off_coupon', 'Enabling coupon functions', 'addition_on_off_coupon', 'wps_config_page', 'section_id');
     add_settings_field('addition_on_off_js', 'Enabling addition js functions', 'addition_on_off_js', 'wps_config_page', 'section_id');
+    add_settings_field('addition_on_off_search_only_woocommerce', 'Enabling search only product WooCommerce', 'addition_on_off_search_only_woocommerce', 'wps_config_page', 'section_id');
 }
 
 /**
@@ -72,7 +73,7 @@ function addition_on_off()
 }
 
 /**
- * jumper auto coupon application
+ * jumper auto coupon application in woocommerce
  */
 function addition_on_off_coupon()
 {
@@ -95,6 +96,20 @@ function addition_on_off_js()
     ?>
     <label><input type="checkbox" name="option_addition_config_wps[onoffjs]" value="1" <?php checked(1, $val) ?> />
         On/Off (addition js)
+    </label>
+    <?php
+}
+
+/**
+ * jumper search only product
+ */
+function addition_on_off_search_only_woocommerce()
+{
+    $val = get_option('option_addition_config_wps');
+    $val = $val ? $val['onoffsearchonly'] : null;
+    ?>
+    <label><input type="checkbox" name="option_addition_config_wps[onoffsearchonly]" value="1" <?php checked(1, $val) ?> />
+        On/Off (search only woocomerce)
     </label>
     <?php
 }
@@ -158,6 +173,7 @@ $config = get_option('option_addition_config_wps');
 $onOff = $config ? $config['onoff'] : null;
 $onOffCoupon = $config ? $config['onoffcoupon'] : null;
 $onOffJs = $config ? $config['onoffjs'] : null;
+$onOffSearchOnly = $config ? $config['onoffsearchonly'] : null;
 
 if (!is_null($onOffCoupon)) {
     add_action('woocommerce_before_cart_table', 'add_coupon_automatically');
@@ -169,6 +185,10 @@ if (!is_null($onOff)) {
     add_filter('woocommerce_product_add_to_cart_text', 'custom_add_to_cart_price', 20, 2);
     add_filter('woocommerce_shipstation_export_custom_field_2', 'shipstation_custom_field_2');
     add_filter('postmeta_form_limit', 'meta_limit_increase');
+}
+
+if(!is_null($onOffSearchOnly)){
+    add_action( 'pre_get_posts', 'search_woocommerce_only' );
 }
 
 function woocommerce_saved_sales_price($price, $product)
@@ -204,6 +224,12 @@ function custom_add_to_cart_price($button_text, $product)
         }
     } else {
         return $product->get_price_html();
+    }
+}
+
+function search_woocommerce_only( $query ) {
+    if( ! is_admin() && is_search() && $query->is_main_query() ) {
+        $query->set( 'post_type', 'product' );
     }
 }
 
